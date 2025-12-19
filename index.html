@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HBD Love ❤️</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="file/default.css">
+
+    <!-- JS libraries -->
+    <script src="file/jquery.min.js"></script>
+    <script src="file/jscex.min.js"></script>
+    <script src="file/jscex-parser.js"></script>
+    <script src="file/jscex-jit.js"></script>
+    <script src="file/jscex-builderbase.min.js"></script>
+    <script src="file/jscex-async.min.js"></script>
+    <script src="file/jscex-async-powerpack.min.js"></script>
+    <script src="file/function.js"></script>
+    <script src="file/love.js"></script>
+
+    <script>
+        function playAudio() {
+            const audio = document.getElementById("myAudio");
+            if (audio.paused) {
+                audio.play();
+            }
+        }
+    </script>
+</head>
+
+<body>
+<div id="main">
+
+    <div id="error" style="display:none;">
+        Please use a modern browser like Chrome or Firefox.
+    </div>
+
+    <!-- AUDIO (correct path + browser-safe) -->
+    <audio id="myAudio" loop>
+        <source src="file/aud.mp3" type="audio/mpeg">
+    </audio>
+
+    <div id="wrap">
+        <div id="text">
+            <div id="code">
+                <span class="say">Hey Pocha 💞</span><br>
+                <span class="say">Happy Birthday 🎈</span><br>
+                <span class="say">May God bless you 🍀</span><br>
+                <span class="say">And give you endless happiness 💕</span><br>
+                <span class="say">You’re honestly pretty amazing ❤️</span><br>
+                <span class="say">Sending love, smiles, and a wink 😏</span><br>
+                <span class="say">Have a beautiful day ❤️😘</span><br>
+            </div>
+        </div>
+
+        <div id="clock-box">
+            <span id="clock"></span>
+        </div>
+
+        <canvas id="canvas" width="1100" height="680"></canvas>
+    </div>
+</div>
+
+<script>
+(function () {
+
+    const canvas = $('#canvas');
+
+    if (!canvas[0].getContext) {
+        $("#error").show();
+        return;
+    }
+
+    const width = canvas.width();
+    const height = canvas.height();
+    canvas.attr("width", width);
+    canvas.attr("height", height);
+
+    const opts = {
+        seed: {
+            x: width / 2 - 20,
+            color: "rgb(190,26,37)",
+            scale: 2
+        },
+        branch: [
+            [535, 680, 570, 250, 500, 200, 30, 100, [
+                [540, 500, 455, 417, 340, 400, 13, 100],
+                [550, 445, 600, 356, 680, 345, 12, 100],
+                [539, 281, 537, 248, 534, 217, 3, 40],
+                [546, 397, 413, 247, 328, 244, 9, 80],
+                [546, 357, 608, 252, 678, 221, 6, 100]
+            ]]
+        ],
+        bloom: {
+            num: 700,
+            width: 1080,
+            height: 650
+        },
+        footer: {
+            width: 1200,
+            height: 5,
+            speed: 10
+        }
+    };
+
+    const tree = new Tree(canvas[0], width, height, opts);
+    const seed = tree.seed;
+    const foot = tree.footer;
+    let hold = true;
+
+    canvas.on("click", function (e) {
+        playAudio();
+
+        const offset = canvas.offset();
+        const x = e.pageX - offset.left;
+        const y = e.pageY - offset.top;
+
+        if (seed.hover(x, y)) {
+            hold = false;
+            canvas.off("click mousemove");
+            canvas.removeClass("hand");
+        }
+    });
+
+    canvas.on("mousemove", function (e) {
+        const offset = canvas.offset();
+        const x = e.pageX - offset.left;
+        const y = e.pageY - offset.top;
+        canvas.toggleClass("hand", seed.hover(x, y));
+    });
+
+    const seedAnimate = eval(Jscex.compile("async", function () {
+        seed.draw();
+        while (hold) {
+            $await(Jscex.Async.sleep(10));
+        }
+        while (seed.canScale()) {
+            seed.scale(0.95);
+            $await(Jscex.Async.sleep(10));
+        }
+        while (seed.canMove()) {
+            seed.move(0, 2);
+            foot.draw();
+            $await(Jscex.Async.sleep(10));
+        }
+    }));
+
+    const growAnimate = eval(Jscex.compile("async", function () {
+        do {
+            tree.grow();
+            $await(Jscex.Async.sleep(10));
+        } while (tree.canGrow());
+    }));
+
+    const flowAnimate = eval(Jscex.compile("async", function () {
+        do {
+            tree.flower(2);
+            $await(Jscex.Async.sleep(10));
+        } while (tree.canFlower());
+    }));
+
+    const moveAnimate = eval(Jscex.compile("async", function () {
+        tree.snapshot("p1", 240, 0, 610, 680);
+        while (tree.move("p1", 500, 0)) {
+            foot.draw();
+            $await(Jscex.Async.sleep(10));
+        }
+        foot.draw();
+        tree.snapshot("p2", 500, 0, 610, 680);
+
+        canvas.parent().css("background", "url(" + tree.toDataURL("image/png") + ")");
+        canvas.css("background", "#ffe");
+        $await(Jscex.Async.sleep(300));
+        canvas.css("background", "none");
+    }));
+
+    const textAnimate = eval(Jscex.compile("async", function () {
+        $("#code").show().typewriter();
+    }));
+
+    const runAsync = eval(Jscex.compile("async", function () {
+        $await(seedAnimate());
+        $await(growAnimate());
+        $await(flowAnimate());
+        $await(moveAnimate());
+        textAnimate().start();
+    }));
+
+    runAsync().start();
+
+})();
+</script>
+</body>
+</html>
